@@ -9,7 +9,6 @@ import pandas as pd
 # defining agents as abstact class
 class Agent:
     # init-method, the constructor method for agents
-    # maybe we dont need the position and index parameters? these will be given in the populate_company function
     def __init__(self, municipality, children, socio_economic, age):
         self.municipality = municipality
         self.children = children
@@ -68,7 +67,7 @@ def populate_denmark(environment: dict):
 
             company[i][j] = Agent(position = i, index = j, gender = random.choices(['male', 'female'], weights = weights, k = 1), age = age, senority = senority)
 
-""""
+
 # function for counting gender of agents in the different hierchical levels of the company
 def count_gender(company):
     '''

@@ -42,7 +42,7 @@ def create_municipality_class(name, fertility_rate, initial_population_percentag
     # Generate agent data within the municipality
     mean_fertility_rate = fertility_rate
     std_dev_fertility_rate = 0.1 * fertility_rate  # Adjust the standard deviation as needed
-    total_agents = 1000  # Total number of agents per municipality
+    total_agents = 10000  # Total number of agents per municipality
     num_agents = int(total_agents * (initial_population_percentage / 100))
     for _ in range(num_agents):
         # Sample fertility rate from a normal distribution around the mean fertility rate
@@ -132,9 +132,9 @@ agents_df.to_csv("agents_df1")
 def simulate_child_birth(agents_df, year):
     # Define probability weights for having a child based on age bins and socio-economic classes
     probability_weights = {
-        '1': {'15-25': 1, '26-35': 0.2, '36-45': 0.3},  # Low socio-economic class
-        '2': {'15-25': 0.05, '26-35': 0.15, '36-45': 0.25},  # Middle socio-economic class
-        '3': {'15-25': 0.5, '26-35': 0.1, '36-45': 0.2}  # High socio-economic class
+        '1': {'15-19': 0.003, '20-24': 0.03, '25-29': 0.082, '30-34': 0.059, '35-39': 0.021, '40-44': 0.004, '45-49': 0.00},  # Low socio-economic class
+        '2': {'15-19': 0.003, '20-24': 0.026, '25-29': 0.074, '30-34': 0.069, '35-39': 0.023, '40-44': 0.004, '45-49': 0.00},  # Middle socio-economic class
+        '3': {'15-19': 0.002, '20-24': 0.018, '25-29': 0.071, '30-34': 0.074, '35-39': 0.03, '40-44': 0.006, '45-49': 0.00}  # High socio-economic class
     }
     
     # Iterate through each agent in the DataFrame
@@ -144,12 +144,20 @@ def simulate_child_birth(agents_df, year):
         age = agent.Age
         
         # Determine the age bin of the agent
-        if age <= 25:
-            age_bin = '15-25'
-        elif age <= 35:
-            age_bin = '26-35'
+        if age <= 19:
+            age_bin = '15-19'
+        elif age <= 24 & age > 19:
+            age_bin = '20-24'
+        elif age <= 29 & age > 24:
+            age_bin = '25-29'
+        elif age <= 34 & age > 29:
+            age_bin = '30-34'
+        elif age <= 39 & age > 34:
+            age_bin = '35-39'
+        elif age <= 44 & age > 39:
+            age_bin = '40-44'
         else:
-            age_bin = '36-45'
+            age_bin = '45-49'
         
         # Compute the probability of having a child based on socio-economic class and age
         probability = probability_weights.get(socio_economic_class, {}).get(age_bin, 0)
@@ -159,11 +167,13 @@ def simulate_child_birth(agents_df, year):
         
         # Increment the number of children for the agent if they had a child
         if has_child:
-            agents_df.at[index, 'Children'] += 1
-            agents_df.at[index, f'Year_{year}'] = 1 
+             agents_df.at[index, f'Year_{year}'] = 1 
+        else:
+            agents_df.at[index, f'Year_{year}'] = 0
 
         # Increment agent's age by 1
         agents_df.at[index, 'Age'] += 1
+        
             
     return agents_df
 
@@ -173,14 +183,12 @@ def simulate_child_birth(agents_df, year):
 
 
 # Simulate for 10 years
-for year in range(1, 11):
+for year in range(1, 30):
     # Simulate child birth for all agents for the current year
-    agents_df = simulate_child_birth(agents_df, year)
+    agents_df_10k = simulate_child_birth(agents_df, year)
     
     # Save the data to a CSV file after each year
-    agents_df.to_csv(f'agents_data.csv', index=False)
+    agents_df_10k.to_csv(f'agents_data_10k.csv', index=False)
     
-    # Display message indicating the completion of the simulation for the current year
-    print(f"Simulation for year {year} completed. Data saved to agents_data_year_{year}.csv")
 
 
