@@ -88,12 +88,12 @@ for index, row in data.iterrows():
 for municipality_name, municipality_class in municipality_classes.items():
     print(f"Municipality: {municipality_name}")
     print(f"Fertility Rate: {municipality_class.fertility_rate}")
-    print(f"Socio-economic Class: {municipality_class.socio_economic_class}")
+    print(f"socio_economic_class: {municipality_class.socio_economic_class}")
     print(f"Initial Population Percentage: {municipality_class.initial_population_percentage}")
     print(f"Number of Agents: {len(municipality_class.agents)}")
     print(f"Agents:")
     for agent in municipality_class.agents:
-        print(f"  - Fertility Rate: {agent.fertility_rate}, Socio-economic Class: {agent.socio_economic_class}, Age: {agent.age}, Municipality: {agent.municipality.name}")
+        print(f"  - Fertility Rate: {agent.fertility_rate}, socio_economic_class: {agent.socio_economic_class}, Age: {agent.age}, Municipality: {agent.municipality.name}")
     print()
 
 # STEP 05 - Create DF
@@ -110,7 +110,7 @@ for municipality_name, municipality_class in municipality_classes.items():
         agent_data = {
             'Municipality': agent.municipality.name,
             'Fertility Rate': agent.fertility_rate,
-            'Socio': agent.socio_economic_class,
+            'socio_economic_class': agent.socio_economic_class,
             'Age': agent.age,
             'Children': agent.children
         }
@@ -129,7 +129,7 @@ agents_df.to_csv("agents_df1")
 # SIMULATION
 
 
-def simulate_child_birth(agents_df):
+def simulate_child_birth(agents_df, year):
     # Define probability weights for having a child based on age bins and socio-economic classes
     probability_weights = {
         '1': {'15-25': 1, '26-35': 0.2, '36-45': 0.3},  # Low socio-economic class
@@ -140,8 +140,8 @@ def simulate_child_birth(agents_df):
     # Iterate through each agent in the DataFrame
     for index, agent in agents_df.iterrows():
         # Extract socio-economic class and age of the agent
-        socio_economic_class = agent['Socio']
-        age = agent['Age']
+        socio_economic_class = agent.socio_economic_class
+        age = agent.Age
         
         # Determine the age bin of the agent
         if age <= 25:
@@ -160,6 +160,7 @@ def simulate_child_birth(agents_df):
         # Increment the number of children for the agent if they had a child
         if has_child:
             agents_df.at[index, 'Children'] += 1
+            agents_df.at[index, f'Year_{year}'] = 1 
 
         # Increment agent's age by 1
         agents_df.at[index, 'Age'] += 1
@@ -170,19 +171,16 @@ def simulate_child_birth(agents_df):
 # Assume agents_df is the DataFrame containing agent data
 # agents_df = pd.DataFrame({...})
 
-# Create DataFrame for agents
-agents_df = pd.DataFrame(data)
 
 # Simulate for 10 years
-for year in range(10):
-    # Simulate child birth for all agents
-    agents_df = simulate_child_birth(agents_df)
+for year in range(1, 11):
+    # Simulate child birth for all agents for the current year
+    agents_df = simulate_child_birth(agents_df, year)
     
-    # Save the data to a CSV file
-    agents_df.to_csv(f'agents_data_year_{year + 1}.csv', index=False)
+    # Save the data to a CSV file after each year
+    agents_df.to_csv(f'agents_data.csv', index=False)
     
     # Display message indicating the completion of the simulation for the current year
-    print(f"Simulation for year {year + 1} completed. Data saved to agents_data_year_{year + 1}.csv")
+    print(f"Simulation for year {year} completed. Data saved to agents_data_year_{year}.csv")
 
 
-print(agents_df.columns)
