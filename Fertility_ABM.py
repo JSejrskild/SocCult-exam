@@ -10,54 +10,54 @@ import pandas as pd
 class Agent:
     # init-method, the constructor method for agents
     # maybe we dont need the position and index parameters? these will be given in the populate_company function
-    def __init__(self, position, index, gender, age, senority):
-        self.position = position
-        self.index = index
-        self.gender = gender
+    def __init__(self, municipality, children, socio_economic, age):
+        self.municipality = municipality
+        self.children = children
+        self.socio_economic = socio_economic
         self.age = age
-        self.senority = senority
 
 
-# function for creating empty dictionary (company)
-def create_company(titles:list, n:list):
+
+# function for creating empty dictionary (environment)
+def create_environment(municipality:list, n:list):
     '''
-    Creates a dictionary with the given titles as keys and empty lists as values.
+    Creates a dictionary with the given municipalities as keys and empty lists as values.
 
     Parameters
     ----------
-    titles : list, a list of strings with job titles
-    n : list, a list of integers with the number of agents in each job title
+    municipality : list, a list of strings with municipalities
+    n : list, a list of integers with the number of agents in each municipality
     '''
-    company = {}
-    for i in range(len(titles)):
-        key = titles[i] 
+    environment = {}
+    for i in range(len(municipality)):
+        key = municipality[i] 
         value = [None for i in range(0, n[i])]
-        company[key] = value
+        environment[key] = value
 
-    return company
+    return environment
 
 
 
-# function for creating the first agents and putting them in the company
-def populate_company(company: dict):
+# function for creating the first agents and putting them in the environment
+def populate_denmark(environment: dict):
     '''
-    Creates the first agents and puts them in the company dictionary.
+    Creates the first agents and puts them in the environment dictionary.
 
     Parameters
     ----------
-    company : dictionary, a dictionary with the job titles as keys and empty lists as values
+    environment : dictionary, a dictionary with the econ_group as keys and empty lists as values
     '''
     for i in company.keys():
         for j in range(0, len(company[i])):
-            if i == 'Department Head':
+            if i == 'High_net_worth':
                 weights = [0.8, 0.2] # more likely to be male when department head
                 age = random.gauss(50, 8)
                 senority = random.gauss(10, 3)
-            elif i == 'Leader':
+            elif i == 'Medium_net_worth':
                 weights = [0.7, 0.3] # more likely to be male when leader
                 age = random.gauss(40, 6)
                 senority = random.gauss(5, 3)
-            elif i == 'Senior':
+            elif i == 'Low_net_worth':
                 weights = [0.6, 0.4] # more likely to be male when senior
                 age = random.gauss(35, 6)
                 senority = random.gauss(4, 1)
@@ -68,7 +68,7 @@ def populate_company(company: dict):
 
             company[i][j] = Agent(position = i, index = j, gender = random.choices(['male', 'female'], weights = weights, k = 1), age = age, senority = senority)
 
-
+""""
 # function for counting gender of agents in the different hierchical levels of the company
 def count_gender(company):
     '''
@@ -268,6 +268,6 @@ def run_abm(months: int, save_path: str, company_titles: list, titles_n: list):
     plot_gender_development(company, months=months, data = data)
     # saving the data to a csv-file
     data.to_csv(save_path)
-
+"""
 
                 
