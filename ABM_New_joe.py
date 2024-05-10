@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Load the dataset
 data = pd.read_csv('Fertility_clean.csv')  # Replace with the actual filename and path
@@ -42,7 +43,7 @@ def create_municipality_class(name, fertility_rate, initial_population_percentag
     # Generate agent data within the municipality
     mean_fertility_rate = fertility_rate
     std_dev_fertility_rate = 0.1 * fertility_rate  # Adjust the standard deviation as needed
-    total_agents = 10000  # Total number of agents per municipality
+    total_agents = 100  # Total number of agents per municipality
     num_agents = int(total_agents * (initial_population_percentage / 100))
     for _ in range(num_agents):
         # Sample fertility rate from a normal distribution around the mean fertility rate
@@ -71,7 +72,7 @@ for index, row in data.iterrows():
     municipality_name = row['municipalities']
     fertility_rate = row['fertilitetsrate']
     initial_population_percentage = row['Percent'] 
-    socio_economic_class = row['econ_score']  # Assuming 'Socio-economic Class' is the column name
+    socio_economic_class = row['econ_score']  
     
     # Define weights for socio-economic classes for this municipality
     if socio_economic_class == '1':
@@ -84,6 +85,7 @@ for index, row in data.iterrows():
     municipality_class = create_municipality_class(municipality_name, fertility_rate, initial_population_percentage, socio_economic_class, socio_economic_weights)
     municipality_classes[municipality_name] = municipality_class
 
+'''
 # Example usage - output municipalities
 for municipality_name, municipality_class in municipality_classes.items():
     print(f"Municipality: {municipality_name}")
@@ -95,6 +97,7 @@ for municipality_name, municipality_class in municipality_classes.items():
     for agent in municipality_class.agents:
         print(f"  - Fertility Rate: {agent.fertility_rate}, socio_economic_class: {agent.socio_economic_class}, Age: {agent.age}, Municipality: {agent.municipality.name}")
     print()
+'''
 
 # STEP 05 - Create DF
 
@@ -121,10 +124,10 @@ for municipality_name, municipality_class in municipality_classes.items():
 agents_df = pd.DataFrame(agent_data_list)
 
 # Display the DataFrame
-print(agents_df)
+#print(agents_df)
 
-agents_df.to_csv("agents_df1")
-
+#agents_df.to_csv("agents_df1")
+print(f'data frame with {len(agents_df)} rows created')
 
 # SIMULATION
 
@@ -159,8 +162,20 @@ def simulate_child_birth(agents_df, year):
         else:
             age_bin = '45-49'
         
+        # Add a weight of broody
+        if agent.children == 0 & age_bin == '15-19':
+            broody = 0.001
+        elif agent.children == 0 & age_bin != '25-19':
+            broody = 0.008
+        elif agent.children == 1:
+            broody = 0.002
+        elif agent.children == 2:
+            broody = -0.005
+        else:
+            broody = 0.0
+            
         # Compute the probability of having a child based on socio-economic class and age
-        probability = probability_weights.get(socio_economic_class, {}).get(age_bin, 0)
+        probability = probability_weights.get(socio_economic_class, {}).get(age_bin, 0) + broody
         
         # Simulate if the agent has a child based on the computed probability
         has_child = np.random.choice([True, False], p=[probability, 1 - probability])
@@ -173,7 +188,7 @@ def simulate_child_birth(agents_df, year):
 
         # Increment agent's age by 1
         agents_df.at[index, 'Age'] += 1
-        
+    
             
     return agents_df
 
@@ -185,10 +200,35 @@ def simulate_child_birth(agents_df, year):
 # Simulate for 10 years
 for year in range(1, 30):
     # Simulate child birth for all agents for the current year
-    agents_df_10k = simulate_child_birth(agents_df, year)
+    agents_df_100 = simulate_child_birth(agents_df, year)
     
     # Save the data to a CSV file after each year
-    agents_df_10k.to_csv(f'agents_data_10k.csv', index=False)
+    #agents_df_10k.to_csv(f'agents_data_10k.csv', index=False)
+  
+print(f'simulation for {year} years completed')
+  
+## Plotting function
+
+#Plot the number of children born each year as a line plot
+def plot_children_born(agents_df):
+    children_born = agents_df.filter(like='Year_', axis=1).sum()
+    children_born.plot(kind='line')
+    plt.xlabel('Year')
+    plt.ylabel('Number of Children Born')
+    plt.title('Number of Children Born Each Year')
+    plt.show()
     
-
-
+#Plot the density of children born over the years for each socio-economic class
+def plot_density_children_born(agents_df):
+    fig, ax = plt.subplots()
+    for socio_economic_class in agents_df['socio_economic_class'].unique():
+        children_born = agents_df[agents_df['socio_economic_class'] == socio_economic_class].filter(like='Year_', axis=1).sum()
+        children_born.plot(kind='kde', ax=ax, label=f'Socio-Economic Class {socio_economic_class}')
+    plt.xlabel('Number of Children Born')
+    plt.ylabel('Density')
+    plt.title('Density of Children Born Over the Years by Socio-Economic Class')
+    plt.legend()
+    plt.show()
+    
+#plot_children_born(agents_df_100)
+plot_density_children_born(agents_df_100)

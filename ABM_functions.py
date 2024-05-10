@@ -1,7 +1,7 @@
 import random
-from matplotlib.ft2font import LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH
+#from matplotlib.ft2font import LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import pandas as pd
 
 
@@ -16,6 +16,11 @@ class Agent:
         self.gender = gender
         self.age = age
         self.senority = senority
+
+# Load the fertility data as that is our base for our environment
+fertility = pd.read_csv('fertility.csv')
+
+
 
 
 # function for creating empty dictionary (company)
@@ -270,4 +275,5 @@ def run_abm(months: int, save_path: str, company_titles: list, titles_n: list):
     data.to_csv(save_path)
 
 
-                
+
+              
