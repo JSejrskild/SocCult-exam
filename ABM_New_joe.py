@@ -163,13 +163,14 @@ def simulate_child_birth(agents_df, year):
             age_bin = '45-49'
         
         # Add a weight of broody
-        if agent.children == 0 & age_bin == '15-19':
+        children = agent.Children
+        if children == 0 & age <= 19 :
             broody = 0.001
-        elif agent.children == 0 & age_bin != '25-19':
+        elif children == 0 & age > 19:
             broody = 0.008
-        elif agent.children == 1:
+        elif children == 1:
             broody = 0.002
-        elif agent.children == 2:
+        elif children == 2:
             broody = -0.005
         else:
             broody = 0.0
@@ -223,7 +224,7 @@ def plot_density_children_born(agents_df):
     fig, ax = plt.subplots()
     for socio_economic_class in agents_df['socio_economic_class'].unique():
         children_born = agents_df[agents_df['socio_economic_class'] == socio_economic_class].filter(like='Year_', axis=1).sum()
-        children_born.plot(kind='kde', ax=ax, label=f'Socio-Economic Class {socio_economic_class}')
+        children_born.plot(kind='kde', ax=ax, label=f'Socio-Economic Class {socio_economic_class}, n = {len(agents_df[agents_df["socio_economic_class"] == socio_economic_class])}')
     plt.xlabel('Number of Children Born')
     plt.ylabel('Density')
     plt.title('Density of Children Born Over the Years by Socio-Economic Class')
