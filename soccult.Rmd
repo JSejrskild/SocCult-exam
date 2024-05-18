@@ -1,0 +1,127 @@
+---
+title: "SocCult"
+output: html_document
+date: "2024-05-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+df <- read.csv("agents_data_40y.csv")
+df2 <- read.csv("agents_data_40y2.csv")
+df_mat <- read.csv("agents_data.csv")
+```
+
+```{r}
+# Make a column with all year_* columns summed
+df$year_sum <- rowSums(df[, grepl("Year_", names(df))])
+df2$year_sum <- rowSums(df2[, grepl("Year_", names(df2))])
+
+# Print the min and max of the year_sum column
+print(paste("Min:", min(df$year_sum)))
+print(paste("Max:", max(df$year_sum)))
+
+print(paste("Min:", min(df2$year_sum)))
+print(paste("Max:", max(df2$year_sum)))
+
+print(paste("Min:", min(df_mat$Children)))
+print(paste("Max:", max(df_mat$Children)))
+
+# count the number of occurrences of each value in the year_sum column
+table(df$year_sum)
+table(df2$year_sum)
+table(df_mat$Children)
+
+
+```
+```{r}
+#Count the TFR - so the total number of children diveded by the rows        
+TFR <- sum(df_mat$Children) / nrow(df_mat)
+print(TFR)
+
+sum(df_mat$Children)
+nrow(df_mat)
+mean(df_mat$Children)
+```
+
+```{r}
+# Count the number of 1s in each year_* column
+for (i in 1:40) {
+  column_name <- paste("Year_", i, sep = "")
+  if (column_name %in% colnames(df)) {
+    count_ones <- sum(df[[column_name]] == 1, na.rm = TRUE)
+    print(paste(column_name, ":", count_ones))
+  } else {
+    print(paste(column_name, "does not exist in the data frame."))
+  }
+}
+
+for (i in 1:40) {
+  column_name <- paste("Year_", i, sep = "")
+  if (column_name %in% colnames(df)) {
+    count_ones <- sum(df2[[column_name]] == 1, na.rm = TRUE)
+    print(paste(column_name, ":", count_ones))
+  } else {
+    print(paste(column_name, "does not exist in the data frame."))
+  }
+}
+```
+
+```{r}
+#Count number of Year_* columns 
+count <- 0
+for (i in 1:40) {
+  column_name <- paste("Year_", i, sep = "")
+  if (column_name %in% colnames(df)) {
+    count <- count + 1
+  }
+}
+
+print(paste("Number of Year_* columns:", count))
+```
+
+```{r}
+
+# Iterate through each 5-year span and sum the values
+for (i in 1:8) { # Adjust the loop range based on your data's years
+  start_year <- (i - 1) * 5 + 1
+  end_year <- i * 5
+  
+  # Construct the correct pattern
+  year_columns <- paste0("Year_", start_year:end_year)
+  
+  # Check which columns are being selected
+  print(paste("Summing columns:", toString(year_columns)))
+  
+  # Ensure the columns exist in the dataframe
+  existing_columns <- year_columns[year_columns %in% names(df2)]
+  print(paste("Existing columns:", toString(existing_columns)))
+  
+  # Sum the selected columns and store in a new column
+  new_column_name <- paste0("Sum_", start_year, "_", end_year)
+  df2[[new_column_name]] <- rowSums(df2[, existing_columns], na.rm = TRUE)
+}
+
+#Print the max and min of the new columns
+for (i in 1:8) {
+  new_column_name <- paste0("Sum_", (i - 1) * 5 + 1, "_", i * 5)
+  print(paste("Min:", min(df2[[new_column_name]])))
+  print(paste("Max:", max(df2[[new_column_name]])))
+}
+
+```
+
+```{r}
+
+# Subset the data frame to only include the new columns, the year_sum column and the ID column
+df2_subset <- df2[, c("Municipality", "socio_economic_class", "Children", "year_sum", grep("Year__", names(df2)))]
+print(head(df2_subset))
+write.csv(df2_subset, "df2_subset.csv", row.names = FALSE)
+
+# Sum the values of the new columns by Municipality
+df2_subset_sum <- aggregate(. ~ Municipality, data = df2_subset, sum)
+print(head(df2_subset_sum))
+
+```
