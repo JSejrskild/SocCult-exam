@@ -144,6 +144,58 @@ agents_df = agents_df.apply(update_children_count, axis=1)
 # Reorder columns
 agents_df = agents_df[['Municipality', 'Fertility Rate', 'socio_economic_class', 'Age', 'Children'] + [f"{age_bin[0]}-{age_bin[1]}" for age_bin in age_bins]]
 
+### ADD Policies ###
+def cash_bonus(additional_prob, age, Children):
+    # Modify probability weights based on age and children policy
+    # Example: Additional probability for certain age groups and numbers of children
+    if age <= 19:
+        additional_prob = 0
+    elif age <= 24 and age > 19:
+        additional_prob = 0.0007
+    elif age <= 29 and age > 24:
+        additional_prob = 0.01
+    elif age <= 34 and age > 29:
+        additional_prob = 0.007
+    elif age <= 39 and age > 34:
+        additional_prob = 0.002
+    elif age <= 44 and age > 39:
+        additional_prob = 0
+    else:
+        additional_prob = 0
+
+    if Children == 0:
+        additional_prob + 0.05
+    elif Children == 1:
+        additional_prob + 0.018
+    elif Children == 2:
+        additional_prob + 0
+    elif Children == 3:
+        additional_prob + 0.002
+    else:
+        additional_prob += -0.01
+            
+    return additional_prob
+
+def cash_benefit(additional_prob, socio_economic_class, Children):
+    if socio_economic_class == '1':
+        additional_prob = 0.0
+    elif socio_economic_class == '2':
+        additional_prob = 0.008
+    else:
+        additional_prob = 0.0064
+    
+    if Children == 0:
+        additional_prob + 0.05
+    elif Children == 1:
+        additional_prob + 0.018
+    elif Children == 2:
+        additional_prob + 0
+    elif Children == 3:
+        additional_prob + 0.002
+    else:
+        additional_prob += 0
+    return additional_prob
+
 
 def simulate_child_birth(agents_df, year):
     # Define probability weights for having a child based on age bins and socio-economic classes
@@ -164,8 +216,13 @@ def simulate_child_birth(agents_df, year):
         # Extract socio-economic class and age of the agent
         socio_economic_class = agent['socio_economic_class']
         age = agent['Age']
+        Children = agent['Children']
+        
+        # Apply policy modifications to probability weights
+        #additional_prob = cash_bonus(0, age, Children)
+        additional_prob = cash_benefit(0, socio_economic_class, Children)
 
-     # If agent is younger than 15 or older than 49, just increment their age
+        # If agent is younger than 15 or older than 49, just increment their age
         if age < 15 or age >= 50:
             agents_df.at[index, 'Age'] += 1
             continue  # Skip the rest of the loop for this agent
@@ -173,21 +230,24 @@ def simulate_child_birth(agents_df, year):
         # Determine the age bin of the agent
         if age <= 19:
             age_bin = '15-19'
-        elif age <= 24:
+        elif age <= 24 and age > 19:
             age_bin = '20-24'
-        elif age <= 29:
+        elif age <= 29 and age > 24:
             age_bin = '25-29'
-        elif age <= 34:
+        elif age <= 34 and age > 29:
             age_bin = '30-34'
-        elif age <= 39:
+        elif age <= 39 and age > 34:
             age_bin = '35-39'
-        elif age <= 44:
+        elif age <= 44 and age > 39:
             age_bin = '40-44'
         else:
             age_bin = '45-49'
         
         # Compute the probability of having a child for this year
-        probability = fertility_rate * probability_weights.get(socio_economic_class, {}).get(age_bin, 0)
+        probability = fertility_rate * probability_weights.get(socio_economic_class, {}).get(age_bin, 0) + additional_prob
+        
+        # Ensure the probability stays within [0, 1]
+        probability = max(0, min(1, probability))
         
         # Simulate if the agent has a child based on the computed probability
         has_child = np.random.choice([True, False], p=[probability, 1 - probability])
@@ -196,7 +256,8 @@ def simulate_child_birth(agents_df, year):
         if has_child:
             agents_df.at[index, age_bin] += 1
             agents_df.at[index, 'Children'] += 1
-        
+    
+    print(f' Year {year} simulation completed')    
     return agents_df
 
 
@@ -216,7 +277,7 @@ for year in range(0, 34):
     agents_df_10k = simulate_child_birth(agents_df, year)
     
     # Save the data to a CSV file
-    agents_df_10k.to_csv(f'agents_data.csv', index=False)
+    agents_df_10k.to_csv(f'data_w_cashbenefit.csv', index=False)
 
 
 """"
@@ -229,3 +290,4 @@ for i in range(0, len(agents_data_10k.columns), 5):
     children_by_age[age_group] = sum_of_children
 
 """
+

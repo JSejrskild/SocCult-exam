@@ -12,6 +12,16 @@ knitr::opts_chunk$set(echo = TRUE)
 df <- read.csv("agents_data_40y.csv")
 df2 <- read.csv("agents_data_40y2.csv")
 df_mat <- read.csv("agents_data.csv")
+df_cashbonus <- read.csv("data_w_cashbonus.csv")
+```
+
+```{r}
+df_cashbenefit <- read.csv("data_w_cashbenefit.csv")
+
+table(df_mat$Children)
+table(df_cashbonus$Children)
+table(df_cashbenefit$Children)
+
 ```
 
 ```{r}
@@ -44,84 +54,128 @@ print(TFR)
 sum(df_mat$Children)
 nrow(df_mat)
 mean(df_mat$Children)
-```
 
-```{r}
-# Count the number of 1s in each year_* column
-for (i in 1:40) {
-  column_name <- paste("Year_", i, sep = "")
-  if (column_name %in% colnames(df)) {
-    count_ones <- sum(df[[column_name]] == 1, na.rm = TRUE)
-    print(paste(column_name, ":", count_ones))
-  } else {
-    print(paste(column_name, "does not exist in the data frame."))
-  }
-}
+TFR <- sum(df_cashbonus$Children) / nrow(df_cashbonus)
+print(TFR)
 
-for (i in 1:40) {
-  column_name <- paste("Year_", i, sep = "")
-  if (column_name %in% colnames(df)) {
-    count_ones <- sum(df2[[column_name]] == 1, na.rm = TRUE)
-    print(paste(column_name, ":", count_ones))
-  } else {
-    print(paste(column_name, "does not exist in the data frame."))
-  }
-}
-```
-
-```{r}
-#Count number of Year_* columns 
-count <- 0
-for (i in 1:40) {
-  column_name <- paste("Year_", i, sep = "")
-  if (column_name %in% colnames(df)) {
-    count <- count + 1
-  }
-}
-
-print(paste("Number of Year_* columns:", count))
-```
-
-```{r}
-
-# Iterate through each 5-year span and sum the values
-for (i in 1:8) { # Adjust the loop range based on your data's years
-  start_year <- (i - 1) * 5 + 1
-  end_year <- i * 5
-  
-  # Construct the correct pattern
-  year_columns <- paste0("Year_", start_year:end_year)
-  
-  # Check which columns are being selected
-  print(paste("Summing columns:", toString(year_columns)))
-  
-  # Ensure the columns exist in the dataframe
-  existing_columns <- year_columns[year_columns %in% names(df2)]
-  print(paste("Existing columns:", toString(existing_columns)))
-  
-  # Sum the selected columns and store in a new column
-  new_column_name <- paste0("Sum_", start_year, "_", end_year)
-  df2[[new_column_name]] <- rowSums(df2[, existing_columns], na.rm = TRUE)
-}
-
-#Print the max and min of the new columns
-for (i in 1:8) {
-  new_column_name <- paste0("Sum_", (i - 1) * 5 + 1, "_", i * 5)
-  print(paste("Min:", min(df2[[new_column_name]])))
-  print(paste("Max:", max(df2[[new_column_name]])))
-}
+sum(df_cashbonus$Children)
+nrow(df_cashbonus)
+mean(df_cashbonus$Children)
 
 ```
 
 ```{r}
+#Print the average and quantiles of number of children born in each socio_economic_class
+df_cashbenefit %>%
+    group_by(socio_economic_class) %>%
+    summarise(mean_children = mean(Children),
+              quantile_25 = quantile(Children, 0.25),
+              quantile_75 = quantile(Children, 0.75))
 
-# Subset the data frame to only include the new columns, the year_sum column and the ID column
-df2_subset <- df2[, c("Municipality", "socio_economic_class", "Children", "year_sum", grep("Year__", names(df2)))]
-print(head(df2_subset))
-write.csv(df2_subset, "df2_subset.csv", row.names = FALSE)
+TFR <- sum(df_cashbenefit$Children) / nrow(df_cashbenefit)
+print(TFR)
+```
 
-# Sum the values of the new columns by Municipality
-df2_subset_sum <- aggregate(. ~ Municipality, data = df2_subset, sum)
-print(head(df2_subset_sum))
+```{r}
+library(ggplot2)
+#Plot the number of children from each socio_economic_class
+df_mat$socio_economic_class <- as.factor(df_mat$socio_economic_class)
+ggplot(df_mat, aes(x = socio_economic_class, y = Children)) + geom_boxplot()
 
+df_cashbonus$socio_economic_class <- as.factor(df_cashbonus$socio_economic_class)
+ggplot(df_cashbonus, aes(x = socio_economic_class, y = Children)) + geom_boxplot()
+
+df_cashbenefit$socio_economic_class <- as.factor(df_cashbenefit$socio_economic_class)
+ggplot(df_cashbenefit, aes(x = socio_economic_class, y = Children)) + geom_boxplot()
+
+
+
+```
+
+```{r}
+print(colnames(df_cashbenefit))
+```
+
+```{r}
+library(tidyr)
+library(dplyr)
+
+# Rename the columns to remove hyphens
+df_cashbenefit <- df_cashbenefit %>%
+  rename(
+    "1519" = `X15.19`,
+    "2024" = `X20.24`,
+    "2529" = `X25.29`,
+    "3034" = `X30.34`,
+    "3539" = `X35.39`,
+    "4044" = `X40.44`,
+    "4549" = `X45.49`)
+  
+````
+
+```{r}
+# Reshape the data to long format
+df_long <- pivot_longer(df_cashbenefit, 
+                        cols = c("1519", "2024", "2529", "3034", "3539", "4044", "4549"),
+                        names_to = "Age_Group", values_to = "Number_of_Children")
+df_expanded <- df_long %>%
+  uncount(Number_of_Children)
+
+# Convert 'socio_economic_class' to factor
+df_expanded$socio_economic_class <- as.factor(df_expanded$socio_economic_class)
+
+# Print df_expanded to ensure it's created correctly
+print(head(df_expanded))
+````
+
+```{r}
+library(scales)
+
+ggplot(df_expanded, aes(x = socio_economic_class, fill = Age_Group)) +
+  geom_bar(position = "dodge") +
+  labs(x = "Socio-economic Class", y = "Number of Children", fill = "Age Group") +
+    labs(subtitle = "Number of Children Born in Each Age Group in Each Socio-economic Class",
+    title = "Cash benefit pro natal policy") +  theme_minimal()
+
+# Plot the percentage of children in each socio_economic_class in each age group
+ggplot(df_expanded, aes(x = socio_economic_class, fill = Age_Group)) +
+    geom_bar(position = "fill") +
+    # Add labels of percentage of children of each age group in each socio-economic class
+  geom_text(stat = "count", aes(label = scales::percent(..count../tapply(..count.., ..x.., sum)[..x..])),
+            position = position_fill(vjust = 0.5)) + 
+               labs(x = "Socio-economic Class", y = "Percentage of Children", fill = "Age Group") +
+    labs(subtitle = "Percentage of Children Born in Each Age Group in Each Socio-economic Class",
+    title = "Cash benefit pro natal policy") +
+    theme_minimal()
+
+
+  #Print the number agents in each socio_economic_class
+table(df_expanded$socio_economic_class)
+table(df_long$socio_economic_class)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Calculate percentages
+df_percentage <- df_expanded %>%
+  group_by(socio_economic_class) %>%
+  mutate(total_children_socio = sum(Children)) %>%
+  group_by(socio_economic_class, Age_Group) %>%
+  summarise(percentage = sum(Children) / first(total_children_socio) * 100) %>%
+  ungroup()
+
+# Plot the percentage of children in each socio-economic class in each age group
+ggplot(df_percentage, aes(x = socio_economic_class, y = percentage, fill = Age_Group)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Socio-economic Class", y = "Percentage of Children", fill = "Age Group") +
+  labs(subtitle = "Percentage of Children Born in Each Age Group in Each Socio-economic Class",
+       title = "Cash benefit pro natal policy") +
+  theme_minimal()
+
+```
+
+```{r}
+print(df_percentage)
 ```
