@@ -200,7 +200,7 @@ def simulate_child_birth(agents_df, year):
 
 
 # Simulate for 10 years
-for year in range(0, 40):
+for year in range(0, 100):
     # Simulate child birth for all agents for the current year
     agents_df_100 = simulate_child_birth(agents_df, year)
     

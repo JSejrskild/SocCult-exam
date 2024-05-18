@@ -164,6 +164,11 @@ def simulate_child_birth(agents_df, year):
         # Extract socio-economic class and age of the agent
         socio_economic_class = agent['socio_economic_class']
         age = agent['Age']
+
+     # If agent is younger than 15 or older than 49, just increment their age
+        if age < 15 or age >= 50:
+            agents_df.at[index, 'Age'] += 1
+            continue  # Skip the rest of the loop for this agent
         
         # Determine the age bin of the agent
         if age <= 19:
@@ -181,8 +186,8 @@ def simulate_child_birth(agents_df, year):
         else:
             age_bin = '45-49'
         
-        # Compute the probability of having a child based on socio-economic class and age
-        probability = probability_weights.get(socio_economic_class, {}).get(age_bin, 0)
+        # Compute the probability of having a child for this year
+        probability = fertility_rate * probability_weights.get(socio_economic_class, {}).get(age_bin, 0)
         
         # Simulate if the agent has a child based on the computed probability
         has_child = np.random.choice([True, False], p=[probability, 1 - probability])
@@ -191,8 +196,7 @@ def simulate_child_birth(agents_df, year):
         if has_child:
             agents_df.at[index, age_bin] += 1
             agents_df.at[index, 'Children'] += 1
-            
-            
+        
     return agents_df
 
 
@@ -207,7 +211,7 @@ def simulate_child_birth(agents_df, year):
 
 
 # Simulate for 10 years
-for year in range(1, 30):
+for year in range(0, 34):
     # Simulate child birth for all agents for the current year
     agents_df_10k = simulate_child_birth(agents_df, year)
     
