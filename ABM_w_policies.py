@@ -219,8 +219,8 @@ def simulate_child_birth(agents_df, year):
         Children = agent['Children']
         
         # Apply policy modifications to probability weights
-        #additional_prob = cash_bonus(0, age, Children)
-        additional_prob = cash_benefit(0, socio_economic_class, Children)
+        additional_prob = cash_bonus(0, age, Children)
+        #additional_prob = cash_benefit(0, socio_economic_class, Children)
 
         # If agent is younger than 15 or older than 49, just increment their age
         if age < 15 or age >= 50:
@@ -277,7 +277,7 @@ for year in range(0, 34):
     agents_df_10k = simulate_child_birth(agents_df, year)
     
     # Save the data to a CSV file
-    agents_df_10k.to_csv(f'data_w_cashbenefit.csv', index=False)
+    agents_df_10k.to_csv(f'data_w_cashbonus.csv', index=False)
 
 
 """"
