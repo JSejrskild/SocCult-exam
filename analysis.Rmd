@@ -1,0 +1,65 @@
+
+```{r}
+# Load the data
+cashbenefit <- read.csv("long_cashbenefit.csv")
+cashbonus <- read.csv("long_cashbonus.csv")
+baseline <- read.csv("long_baseline.csv")
+```
+
+```{r}
+# Load the packages
+library(dplyr)
+library(ggplot2)
+library(car)
+```
+
+```{r}
+#Combine datasets 
+cashbenefit$Dataset <- 'cashbenefit'
+cashbonus$Dataset <- 'cashbonus'
+baseline$Dataset <- 'baseline'
+
+combined_data <- rbind(cashbenefit, cashbonus, baseline)
+
+```
+
+```{r}
+# Changing to factors so anova wants to play
+combined_data$socio_economic_class <- as.factor(combined_data$socio_economic_class)
+combined_data$Age_Group <- as.factor(combined_data$Age_Group)
+combined_data$Dataset <- as.factor(combined_data$Dataset)
+
+```
+
+```{r}
+# Annova test the difference between the three groups in children distribution between socioeconomic groups and age
+anova_model <- aov(Children ~ socio_economic_class + Age_Group + Dataset, data = combined_data)
+
+# Get the summary of the ANOVA test
+summary(anova_model)
+
+```
+
+# P-values indicate significant differences in the number of children between different socioeconomic classes, age_groups and datasets.
+
+### 
+
+```{r}
+# Perform Tukey's HSD test
+tukey_results <- TukeyHSD(anova_model)
+
+# Print Tukey's HSD test results
+print(tukey_results)
+
+```
+
+# Results
+                             diff         lwr         upr p adj
+cashbenefit-baseline   0.19927173  0.15913681  0.23940665     0
+cashbonus-baseline     0.10332797  0.06289571  0.14376023     0
+cashbonus-cashbenefit -0.09594376 -0.13543409 -0.05645342     0
+
+```{r}
+plot(tukey_results)
+
+```

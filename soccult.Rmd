@@ -6,78 +6,69 @@ date: "2024-05-18"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
 ```
 
 ```{r}
-df <- read.csv("agents_data_40y.csv")
-df2 <- read.csv("agents_data_40y2.csv")
-df_mat <- read.csv("agents_data.csv")
-df_cashbonus <- read.csv("data_w_cashbonus.csv")
-```
-
-```{r}
+# Load the data
 df_cashbenefit <- read.csv("data_w_cashbenefit.csv")
+df_cashbonus <- read.csv("data_w_cashbonus.csv")
+df_baseline <- read.csv("data_wo_policies.csv")
+```
 
-table(df_mat$Children)
+```{r}
+table(df_baseline$Children)
 table(df_cashbonus$Children)
 table(df_cashbenefit$Children)
 
 ```
 
-```{r}
-# Make a column with all year_* columns summed
-df$year_sum <- rowSums(df[, grepl("Year_", names(df))])
-df2$year_sum <- rowSums(df2[, grepl("Year_", names(df2))])
-
-# Print the min and max of the year_sum column
-print(paste("Min:", min(df$year_sum)))
-print(paste("Max:", max(df$year_sum)))
-
-print(paste("Min:", min(df2$year_sum)))
-print(paste("Max:", max(df2$year_sum)))
-
-print(paste("Min:", min(df_mat$Children)))
-print(paste("Max:", max(df_mat$Children)))
-
-# count the number of occurrences of each value in the year_sum column
-table(df$year_sum)
-table(df2$year_sum)
-table(df_mat$Children)
-
-
 ```
 ```{r}
 #Count the TFR - so the total number of children diveded by the rows        
-TFR <- sum(df_mat$Children) / nrow(df_mat)
-print(TFR)
+TFR_base <- sum(df_baseline$Children) / nrow(df_baseline)
+TFR_cashbonus <- sum(df_cashbonus$Children) / nrow(df_cashbonus)
+TFR_cashbenefit <- sum(df_cashbenefit$Children) / nrow(df_cashbenefit)
+print(TFR_base)
+print(TFR_cashbenefit)
+print(TFR_cashbenefit)
 
-sum(df_mat$Children)
-nrow(df_mat)
-mean(df_mat$Children)
-
-TFR <- sum(df_cashbonus$Children) / nrow(df_cashbonus)
-print(TFR)
-
-sum(df_cashbonus$Children)
-nrow(df_cashbonus)
+#print text and mean
+print("The mean of the baseline, the cashbonus and the cashbenefit:")
+mean(df_baseline$Children)
 mean(df_cashbonus$Children)
+mean(df_cashbenefit$Children)
 
 ```
 
 ```{r}
 #Print the average and quantiles of number of children born in each socio_economic_class
-df_cashbenefit %>%
+print("Baseline quantiles for socioeconiomic class:")
+df_baseline %>%
     group_by(socio_economic_class) %>%
     summarise(mean_children = mean(Children),
               quantile_25 = quantile(Children, 0.25),
               quantile_75 = quantile(Children, 0.75))
 
-TFR <- sum(df_cashbenefit$Children) / nrow(df_cashbenefit)
-print(TFR)
+print("Cashbonus quantiles for socioeconiomic class:")
+df_cashbonus %>%
+    group_by(socio_economic_class) %>%
+    summarise(mean_children = mean(Children),
+              quantile_25 = quantile(Children, 0.25),
+              quantile_75 = quantile(Children, 0.75))
+
+print("Cashbenefit quantiles for socioeconiomic class:")
+df_cashbenefit %>%
+    group_by(socio_economic_class) %>%
+    summarise(mean_children = mean(Children),
+              quantile_25 = quantile(Children, 0.25),
+              quantile_75 = quantile(Children, 0.75))
 ```
 
 ```{r}
-library(ggplot2)
+
 #Plot the number of children from each socio_economic_class
 df_mat$socio_economic_class <- as.factor(df_mat$socio_economic_class)
 ggplot(df_mat, aes(x = socio_economic_class, y = Children)) + geom_boxplot()
@@ -97,11 +88,9 @@ print(colnames(df_cashbenefit))
 ```
 
 ```{r}
-library(tidyr)
-library(dplyr)
 
 # Rename the columns to remove hyphens
-df_cashbenefit <- df_cashbenefit %>%
+df_baseline <- df_baseline %>%
   rename(
     "1519" = `X15.19`,
     "2024" = `X20.24`,
@@ -115,7 +104,7 @@ df_cashbenefit <- df_cashbenefit %>%
 
 ```{r}
 # Reshape the data to long format
-df_long <- pivot_longer(df_cashbenefit, 
+df_long <- pivot_longer(df_baseline, 
                         cols = c("1519", "2024", "2529", "3034", "3539", "4044", "4549"),
                         names_to = "Age_Group", values_to = "Number_of_Children")
 df_expanded <- df_long %>%
@@ -126,6 +115,8 @@ df_expanded$socio_economic_class <- as.factor(df_expanded$socio_economic_class)
 
 # Print df_expanded to ensure it's created correctly
 print(head(df_expanded))
+
+write.csv(df_expanded, "long_baseline.csv")
 ````
 
 ```{r}

@@ -173,11 +173,12 @@ def simulate_child_birth(agents_df, year):
         elif children == 2:
             broody = -0.005
         else:
-            broody = 0.0
+            broody = -0.01
             
         # Compute the probability of having a child based on socio-economic class and age
         probability = (probability_weights.get(socio_economic_class, {}).get(age_bin, 0)) + broody
         #print(f'Year: {year}, probability: {probability}, broody: {broody})')
+        
         
         # Simulate if the agent has a child based on the computed probability
         has_child = np.random.choice([True, False], p=[probability, 1 - probability])
@@ -200,12 +201,12 @@ def simulate_child_birth(agents_df, year):
 
 
 # Simulate for 10 years
-for year in range(0, 100):
+#for year in range(0, 40):
     # Simulate child birth for all agents for the current year
     agents_df_100 = simulate_child_birth(agents_df, year)
     
     # Save the data to a CSV file after each year
-    #agents_df_10k.to_csv(f'agents_data_10k.csv', index=False)
+#agents_df_100.to_csv(f'agents_data_40y.csv', index=False)
   
 print(f'simulation for {year} years completed')
   
@@ -233,4 +234,4 @@ def plot_density_children_born(agents_df):
     plt.show()
     
 plot_children_born(agents_df_100)
-plot_density_children_born(agents_df_100)
+###plot_density_children_born(agents_df_100)
