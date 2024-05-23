@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 # Load the dataset
-data = pd.read_csv('Fertility_clean.csv')  # Replace with the actual filename and path
+data = pd.read_csv('Fertility_clean_fixed.csv')  # Replace with the actual filename and path
 
 # STEP 01
 # Define Agent class
@@ -46,7 +46,7 @@ def create_municipality_class(name, fertility_rate, initial_population_percentag
     # Generate agent data within the municipality
     mean_fertility_rate = fertility_rate
     std_dev_fertility_rate = 0.1 * fertility_rate  # Adjust the standard deviation as needed
-    total_agents = 10000  # Total number of agents per municipality
+    total_agents = 100000  # Total number of agents per municipality
     num_agents = int(total_agents * (initial_population_percentage / 100))
 
     for _ in range(num_agents):
@@ -144,6 +144,8 @@ agents_df = agents_df.apply(update_children_count, axis=1)
 # Reorder columns
 agents_df = agents_df[['Municipality', 'Fertility Rate', 'socio_economic_class', 'Age', 'Children'] + [f"{age_bin[0]}-{age_bin[1]}" for age_bin in age_bins]]
 
+print(f' The amount of agents generated is : {len(agents_df)}')
+
 ### ADD Policies ###
 def cash_bonus(additional_prob, age, Children):
     # Modify probability weights based on age and children policy
@@ -219,8 +221,8 @@ def simulate_child_birth(agents_df, year):
         Children = agent['Children']
         
         # Apply policy modifications to probability weights
-        additional_prob = cash_bonus(0, age, Children)
-        #additional_prob = cash_benefit(0, socio_economic_class, Children)
+        #additional_prob = cash_bonus(0, age, Children)
+        additional_prob = cash_benefit(0, socio_economic_class, Children)
 
         # If agent is younger than 15 or older than 49, just increment their age
         if age < 15 or age >= 50:
@@ -244,7 +246,7 @@ def simulate_child_birth(agents_df, year):
             age_bin = '45-49'
         
         # Compute the probability of having a child for this year
-        probability = fertility_rate * probability_weights.get(socio_economic_class, {}).get(age_bin, 0) + additional_prob
+        probability = fertility_rate * probability_weights.get(socio_economic_class, {}).get(age_bin, 0)  + additional_prob
         
         # Ensure the probability stays within [0, 1]
         probability = max(0, min(1, probability))
@@ -277,7 +279,7 @@ for year in range(0, 34):
     agents_df_10k = simulate_child_birth(agents_df, year)
     
     # Save the data to a CSV file
-    agents_df_10k.to_csv(f'data_w_cashbonus.csv', index=False)
+    agents_df_10k.to_csv(f'data_w_cashbenefit_2205.csv', index=False)
 
 
 """"

@@ -95,8 +95,7 @@ plot(municipality_indices,
 ```
 
 ```{r}
-write_csv(fertility, "fertility.csv"
-)
+write_csv(fertility, "fertility.csv")
 ```
 
 
