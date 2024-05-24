@@ -1,0 +1,142 @@
+## Here goes my trial to plot densities over a danish map
+
+```{r}
+#install.packages("sf")
+#install.packages("ggplot2")
+#install.packages("dplyr")
+#install.packages("rnaturalearth")
+#install.packages("rnaturalearthdata")
+#install.packages("tidygeocoder")
+install.packages("httr")
+````
+
+```{r}
+library(sf)
+library(ggplot2)
+library(dplyr)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(tidygeocoder)
+library(httr)
+```
+
+```{r}
+wfs_url <- "https://api.dataforsyningen.dk/DAGI_10MULTIGEOM_GMLSFP_DAF?service=WFS&request=GetFeature&typeName=dagi:Kommuneinddeling&token=1107ccd683a14b80d2ba09a84ccb88fe"
+kommuneinddeling <- st_read(wfs_url)
+
+
+```
+
+
+
+```{r}
+base_url <- "https://api.dataforsyningen.dk/DAGI_10MULTIGEOM_GMLSFP_DAF"
+params <- list(
+  service = "WFS",
+  version = "2.0.0",
+  request = "GetFeature",
+  typeName = "dagi:Kommuneinddeling",
+  srsName = "EPSG:4326",
+  outputFormat = "application/json",
+  token = "1107ccd683a14b80d2ba09a84ccb88fe"
+)
+```
+
+```{r}
+wfs_url <- modify_url(base_url, query = params)
+print(wfs_url)
+```
+
+```{r}
+kommuneinddeling <- st_read(wfs_url)
+
+```
+
+
+```{r}
+# Define the WFS URL with your token
+wfs_url <- "https://api.dataforsyningen.dk/DAGI_10MULTIGEOM_GMLSFP_DAF?service=WFS&request=GetCapabilities&token=1107ccd683a14b80d2ba09a84ccb88fe"
+
+# Read the WFS data
+municipalities <- st_read(wfs_url, layer= "dagi:Kommuneinddeling")
+
+```
+
+```{r}
+# View the attributes and structure of the spatial data
+head(municipalities)
+summary(municipalities)
+
+
+```
+
+
+
+```{r}
+# Get the world map with countries
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+# Filter out Denmark
+denmark <- world %>% filter(name == "Denmark")
+
+```
+
+```{r}
+municipalities_cashbonus <- read.csv("data_w_cashbonus.csv")
+````
+
+```{r}
+
+# Geocode the municipality names
+municipalities_coords <- municipalities_cashbonus %>%
+  geocode(address = Municipality, method = 'osm') # Using OpenStreetMap for geocoding
+
+# Check the resulting dataframe
+head(municipalities_coords)
+
+
+```
+
+```{r}
+points_sf <- st_as_sf(municipalities_coords, coords = c("long", "lat"), crs = 4326)
+
+# Check the structure of the spatial data frame
+str(points_sf)
+```
+
+
+```{r}
+
+# Ensure your spatial data has a column to join on
+# Adjust column name as necessary
+municipalities <- municipalities %>%
+  rename(Municipality = municipalities_cashbonus$Municipality)  # Replace 'name' with the actual column name in your spatial data
+
+# Join the data frames
+municipalities_with_data <- municipalities %>%
+  left_join(municipalities_cashbonus, by = "Municipality")
+
+# Plot the choropleth map
+ggplot() +
+  geom_sf(data = municipalities_with_data, aes(fill = Children), color = "white") +
+  scale_fill_viridis_c(option = "viridis", name = "Number of Children") +
+  theme_minimal() +
+  ggtitle("Number of Children in Municipalities of Denmark") +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank())
+
+```
+
+
+```{r}
+# Plotting the map with density
+ggplot() +
+  geom_sf(data = denmark, fill = "white", color = "black") +  # Base map of Denmark
+  geom_sf(data = municipalities, fill = NA, color = "blue") + # Municipal boundaries
+  geom_density_2d(data = points_sf, aes(x = Children, y = Municipality), color = "red") + # Density plot
+  theme_minimal() +
+  ggtitle("Density of Municipalities in Denmark")
+
+
+```

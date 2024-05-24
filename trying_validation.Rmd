@@ -8,7 +8,7 @@ date: "2024-05-23"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r, results='hide'}
 # Load packages
 library(brms)
 library(tidyverse)
@@ -19,7 +19,7 @@ library(rethinking)
 ```{r}
 cashbenefit <- read.csv("long_cashbenefit_2205.csv")
 cashbonus <- read.csv("long_cashbonus_2205.csv")
-baseline <- read.csv("data_wo_bonus_2205.csv")
+baseline <- read.csv("long_baseline_2205.csv")
 real_data <- read.csv("~/Desktop/Lyfe/Uni/SocCult/Population1.csv")
 ```
 
@@ -32,6 +32,9 @@ baseline$condition <- 0
 
 #Merge the data frames so we can use it to model
 df_combined <- rbind(cashbenefit, cashbonus, baseline)
+df_combined$condition <- as.factor(df_combined$condition)
+df_combined$socio_economic_class <- as.factor(df_combined$socio_economic_class)
+df_combined$Age_Group <- as.factor(df_combined$Age_Group)
 ```
 
 ```{r}
@@ -61,15 +64,41 @@ age_group_columns <- c('1519', '2024', '2529', '3034', '3539', '4044', '4549')
 ````
 
 ```{r}
+# Create a scatterplot of age vs. gender for survivors
+ggplot(baseline, aes(x = Age_Group, y = socio_economic_class, color = socio_economic_class)) +
+  geom_jitter() +
+  labs(title = "Age by Class",
+       x = "Age_group",
+       y = "socio_economic_class",
+       color = "socio_economic_class") +
+  theme_minimal()
 
-# Calculate the percentages of children born in each age group for each municipality
-baseline <- baseline %>%
-  mutate_at(vars(age_group_columns), ~ . / Children)
+ggplot(cashbenefit, aes(x = Age_Group, y = socio_economic_class, color = socio_economic_class)) +
+  geom_jitter() +
+  labs(title = "Age by Class",
+       x = "Age_group",
+       y = "socio_economic_class",
+       color = "socio_economic_class") +
+  theme_minimal()
 
-
+ggplot(cashbonus, aes(x = Age_Group, y = socio_economic_class, color = socio_economic_class)) +
+  geom_jitter() +
+  labs(title = "Age by Class",
+       x = "Age_group",
+       y = "socio_economic_class",
+       color = "socio_economic_class") +
+  theme_minimal()
 
 ````
 
+```{r}
+ggplot(df_combined) +
+  aes(x = socio_economic_class, fill = condition) +
+  geom_bar() +
+  scale_fill_hue(direction = 1) +
+  theme_minimal()
+
+```
 
 
 

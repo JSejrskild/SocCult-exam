@@ -13,9 +13,9 @@ library(ggplot2)
 
 ```{r}
 # Load the data
-df_cashbenefit <- read.csv("data_w_cashbenefit.csv")
-df_cashbonus <- read.csv("data_w_cashbonus.csv")
-df_baseline <- read.csv("data_wo_policies.csv")
+df_cashbenefit <- read.csv("data_w_cashbenefit_2205.csv")
+df_cashbonus <- read.csv("data_w_cashbonus_2205.csv")
+df_baseline <- read.csv("data_wo_bonus_2205.csv")
 ```
 
 ```{r}
@@ -36,7 +36,6 @@ print(TFR_cashbenefit)
 print(TFR_cashbenefit)
 
 #print text and mean
-print("The mean of the baseline, the cashbonus and the cashbenefit:")
 mean(df_baseline$Children)
 mean(df_cashbonus$Children)
 mean(df_cashbenefit$Children)
@@ -70,8 +69,8 @@ df_cashbenefit %>%
 ```{r}
 
 #Plot the number of children from each socio_economic_class
-df_mat$socio_economic_class <- as.factor(df_mat$socio_economic_class)
-ggplot(df_mat, aes(x = socio_economic_class, y = Children)) + geom_boxplot()
+df_baseline$socio_economic_class <- as.factor(df_baseline$socio_economic_class)
+ggplot(df_baseline, aes(x = socio_economic_class, y = Children)) + geom_boxplot()
 
 df_cashbonus$socio_economic_class <- as.factor(df_cashbonus$socio_economic_class)
 ggplot(df_cashbonus, aes(x = socio_economic_class, y = Children)) + geom_boxplot()
@@ -90,7 +89,7 @@ print(colnames(df_cashbenefit))
 ```{r}
 
 # Rename the columns to remove hyphens
-df_baseline <- df_baseline %>%
+df_cashbenefit <- df_cashbenefit %>%
   rename(
     "1519" = `X15.19`,
     "2024" = `X20.24`,
@@ -104,7 +103,7 @@ df_baseline <- df_baseline %>%
 
 ```{r}
 # Reshape the data to long format
-df_long <- pivot_longer(df_baseline, 
+df_long <- pivot_longer(df_cashbenefit, 
                         cols = c("1519", "2024", "2529", "3034", "3539", "4044", "4549"),
                         names_to = "Age_Group", values_to = "Number_of_Children")
 df_expanded <- df_long %>%
@@ -116,7 +115,7 @@ df_expanded$socio_economic_class <- as.factor(df_expanded$socio_economic_class)
 # Print df_expanded to ensure it's created correctly
 print(head(df_expanded))
 
-write.csv(df_expanded, "long_baseline.csv")
+write.csv(df_expanded, "long_cashbenefit_2205.csv")
 ````
 
 ```{r}
