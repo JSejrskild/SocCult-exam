@@ -43,7 +43,7 @@ def create_municipality_class(name, fertility_rate, initial_population_percentag
     # Generate agent data within the municipality
     mean_fertility_rate = fertility_rate
     std_dev_fertility_rate = 0.1 * fertility_rate  # Adjust the standard deviation as needed
-    total_agents = 10000 # Total number of agents per municipality
+    total_agents = 100  # Total number of agents per municipality
     num_agents = int(total_agents * (initial_population_percentage / 100))
     for _ in range(num_agents):
         # Sample fertility rate from a normal distribution around the mean fertility rate
@@ -63,8 +63,6 @@ def create_municipality_class(name, fertility_rate, initial_population_percentag
 
     # Create agents for the municipality
     municipality_class.agents = create_agents_for_municipality(municipality_class, num_agents)
-    
-    #print(f'Municipality: {name}, Number of Agents: {len(municipality_class.agents)}')
     
     return municipality_class
 
@@ -147,7 +145,6 @@ def simulate_child_birth(agents_df, year):
         # Extract socio-economic class and age of the agent
         socio_economic_class = agent.socio_economic_class
         age = agent.Age
-        children = agent.Children
         
         # Determine the age bin of the agent
         if age <= 19:
@@ -166,18 +163,19 @@ def simulate_child_birth(agents_df, year):
             age_bin = '45-49'
         
         # Add a weight of broody
-        if  children == 0:
+        if agent.children == 0 & age_bin == '15-19':
+            broody = 0.001
+        elif agent.children == 0 & age_bin != '25-19':
             broody = 0.008
-        elif children == 1:
-            broody = -0.002
-        elif children == 2:
+        elif agent.children == 1:
+            broody = 0.002
+        elif agent.children == 2:
             broody = -0.005
         else:
             broody = 0.0
             
         # Compute the probability of having a child based on socio-economic class and age
-        probability = (probability_weights.get(socio_economic_class, {}).get(age_bin, 0)) + broody
-        #print(f'Year: {year}, probability: {probability}, broody: {broody})')
+        probability = probability_weights.get(socio_economic_class, {}).get(age_bin, 0) + broody
         
         # Simulate if the agent has a child based on the computed probability
         has_child = np.random.choice([True, False], p=[probability, 1 - probability])
@@ -190,7 +188,7 @@ def simulate_child_birth(agents_df, year):
 
         # Increment agent's age by 1
         agents_df.at[index, 'Age'] += 1
-    print(f' Year {year} simulation completed')
+    
             
     return agents_df
 
@@ -200,7 +198,7 @@ def simulate_child_birth(agents_df, year):
 
 
 # Simulate for 10 years
-for year in range(0, 100):
+for year in range(1, 30):
     # Simulate child birth for all agents for the current year
     agents_df_100 = simulate_child_birth(agents_df, year)
     
@@ -225,12 +223,12 @@ def plot_density_children_born(agents_df):
     fig, ax = plt.subplots()
     for socio_economic_class in agents_df['socio_economic_class'].unique():
         children_born = agents_df[agents_df['socio_economic_class'] == socio_economic_class].filter(like='Year_', axis=1).sum()
-        children_born.plot(kind='kde', ax=ax, label=f'Socio-Economic Class {socio_economic_class}: {len(agents_df[agents_df["socio_economic_class"] == socio_economic_class])} agents')
+        children_born.plot(kind='kde', ax=ax, label=f'Socio-Economic Class {socio_economic_class}')
     plt.xlabel('Number of Children Born')
     plt.ylabel('Density')
     plt.title('Density of Children Born Over the Years by Socio-Economic Class')
     plt.legend()
     plt.show()
     
-plot_children_born(agents_df_100)
+#plot_children_born(agents_df_100)
 plot_density_children_born(agents_df_100)
