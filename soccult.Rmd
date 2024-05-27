@@ -1,0 +1,245 @@
+---
+title: "SocCult"
+output: html_document
+date: "2024-05-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(scales)
+```
+
+```{r}
+# Load the data
+df_cashbenefit <- read.csv("data_w_cashbenefit_2205.csv")
+df_cashbonus <- read.csv("data_w_cashbonus_2205.csv")
+df_baseline <- read.csv("data_wo_bonus_2205.csv")
+```
+
+```{r}
+table(df_baseline$Children)
+table(df_cashbonus$Children)
+table(df_cashbenefit$Children)
+
+
+#Print the percentage of children in each socio_economic_class
+table(df_baseline$socio_economic_class)
+table(df_cashbonus$socio_economic_class)
+table(df_cashbenefit$socio_economic_class)
+
+
+```
+
+```
+```{r}
+#Count the TFR - so the total number of children diveded by the rows        
+TFR_base <- sum(df_baseline$Children) / nrow(df_baseline)
+TFR_cashbonus <- sum(df_cashbonus$Children) / nrow(df_cashbonus)
+TFR_cashbenefit <- sum(df_cashbenefit$Children) / nrow(df_cashbenefit)
+print(TFR_base)
+print(TFR_cashbenefit)
+print(TFR_cashbenefit)
+
+#print text and mean
+mean(df_baseline$Children)
+mean(df_cashbonus$Children)
+mean(df_cashbenefit$Children)
+
+```
+
+```{r}
+#Print the average and quantiles of number of children born in each socio_economic_class
+print("Baseline quantiles for socioeconiomic class:")
+df_baseline %>%
+    group_by(socio_economic_class) %>%
+    summarise(mean_children = mean(Children),
+              quantile_25 = quantile(Children, 0.25),
+              quantile_75 = quantile(Children, 0.75))
+
+print("Cashbonus quantiles for socioeconiomic class:")
+df_cashbonus %>%
+    group_by(socio_economic_class) %>%
+    summarise(mean_children = mean(Children),
+              quantile_25 = quantile(Children, 0.25),
+              quantile_75 = quantile(Children, 0.75))
+
+print("Cashbenefit quantiles for socioeconiomic class:")
+df_cashbenefit %>%
+    group_by(socio_economic_class) %>%
+    summarise(mean_children = mean(Children),
+              quantile_25 = quantile(Children, 0.25),
+              quantile_75 = quantile(Children, 0.75))
+```
+
+```{r}
+
+#Plot the number of children from each socio_economic_class
+df_baseline$socio_economic_class <- as.factor(df_baseline$socio_economic_class)
+ggplot(df_baseline, aes(x = socio_economic_class, y = Children)) + geom_boxplot()
+
+df_cashbonus$socio_economic_class <- as.factor(df_cashbonus$socio_economic_class)
+ggplot(df_cashbonus, aes(x = socio_economic_class, y = Children)) + geom_boxplot()
+
+df_cashbenefit$socio_economic_class <- as.factor(df_cashbenefit$socio_economic_class)
+ggplot(df_cashbenefit, aes(x = socio_economic_class, y = Children)) + geom_boxplot()
+
+
+
+```
+
+```{r}
+print(colnames(df_cashbenefit))
+```
+
+```{r}
+
+# Rename the columns to remove hyphens
+df_baseline <- df_baseline %>%
+  rename(
+    "1519" = `X15.19`,
+    "2024" = `X20.24`,
+    "2529" = `X25.29`,
+    "3034" = `X30.34`,
+    "3539" = `X35.39`,
+    "4044" = `X40.44`,
+    "4549" = `X45.49`)
+  
+````
+
+```{r}
+# Reshape the data to long format
+df_long <- pivot_longer(df_cashbonus, 
+                        cols = c("1519", "2024", "2529", "3034", "3539", "4044", "4549"),
+                        names_to = "Age_Group", values_to = "Number_of_Children")
+df_expanded <- df_long %>%
+  uncount(Number_of_Children)
+
+# Convert 'socio_economic_class' to factor
+df_expanded$socio_economic_class <- as.factor(df_expanded$socio_economic_class)
+
+# Print df_expanded to ensure it's created correctly
+print(head(df_expanded))
+
+write.csv(df_expanded, "long_baseline_2205.csv")
+````
+
+```{r}
+
+#Load the long datafiles
+long_cashbenefit <- read.csv("long_cashbenefit_2205.csv")
+long_cashbonus <- read.csv("long_cashbonus_2205.csv")
+long_baseline <- read.csv("long_baseline_2205.csv")
+
+
+ggplot(long_cashbenefit, aes(x = socio_economic_class, fill = Age_Group)) +
+  geom_bar(position = "dodge") +
+  labs(x = "Socio-economic Class", y = "Number of Children", fill = "Age Group") +
+    labs(subtitle = "Number of Children Born in Each Age Group in Each Socio-economic Class",
+    title = "Cash benefit pro natal policy") + 
+     theme_minimal()
+
+# Plot the percentage of children in each socio_economic_class in each age group
+ggplot(long_cashbenefit, aes(x = socio_economic_class, fill = Age_Group)) +
+    geom_bar(position = "fill") +
+    # Add labels of percentage of children of each age group in each socio-economic class
+  geom_text(stat = "count", aes(label = scales::percent(..count../tapply(..count.., ..x.., sum)[..x..])),
+            position = position_fill(vjust = 0.5)) + 
+               labs(x = "Socio-economic Class", y = "Percentage of Children", fill = "Age Group") +
+    labs(subtitle = "Percentage of Children Born in Each Age Group in Each Socio-economic Class",
+    title = "Cash benefit pro natal policy") +
+    theme_minimal()
+
+
+  #Print the number agents in each socio_economic_class
+table(long_cashbenefit$socio_economic_class)
+table(long_cashbonus$socio_economic_class)
+table(long_baseline$socio_economic_class)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Calculate percentages
+df_percentage <- long_cashbenefit %>%
+  group_by(socio_economic_class) %>%
+  mutate(total_children_socio = sum(Children)) %>%
+  group_by(socio_economic_class, Age_Group) %>%
+  summarise(percentage = sum(Children) / first(total_children_socio) * 100) %>%
+  ungroup()
+
+# Plot the percentage of children in each socio-economic class in each age group
+ggplot(df_percentage, aes(x = socio_economic_class, y = percentage, fill = Age_Group)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Socio-economic Class", y = "Percentage of Children", fill = "Age Group") +
+  labs(subtitle = "Percentage of Children Born in Each Age Group in Each Socio-economic Class",
+       title = "Cash benefit pro natal policy") +
+  theme_minimal()
+
+```
+
+```{r}
+print(df_percentage)
+```
+
+```{r}
+# Merge the three dataframes and add a column to indicate the condition
+df_all <- rbind(
+  mutate(long_cashbenefit, condition = "Cashbenefit"),
+  mutate(long_cashbonus, condition = "Cashbonus"),
+  mutate(long_baseline, condition = "Baseline")
+)
+# Ensure socio_economic_class is a factor
+df_all$socio_economic_class <- as.factor(df_all$socio_economic_class)
+df_all$condition <- as.factor(df_all$condition)
+df_all$Age_Group <- as.factor(df_all$Age_Group)
+
+# calculate the number of children in each age group for each socio_economic class in each condition
+df_new <- df_all %>%
+  group_by(socio_economic_class, Age_Group, condition) %>%
+  summarise(Children = sum(Children))
+
+# change children to percentage of children in that condition
+df_new <- df_new %>%
+  group_by(condition) %>%
+  mutate(percentage = Children / sum(Children) * 100) %>%
+  ungroup()
+
+#Make accumulated percentage of children over age groups
+df_new <- df_new %>%
+  group_by(condition) %>%
+  mutate(acc_percentage = cumsum(percentage)) %>%
+  ungroup()
+
+write.csv(df_new, "df_long_combined_2205.csv")
+```
+
+```{r}
+custom_colors <- c("1" = "blue", "2" = "skyblue", "3" = "black")
+custom_linetypes <- c("Cashbenefit" = "solid", "Cashbonus" = "dashed", "Baseline" = "dotted")
+
+# Line plot of the amount of children born in each age group for each condition
+ggplot(df_new, aes(x = Age_Group, y = percentage, color = socio_economic_class, linetype = condition, group = interaction(condition, socio_economic_class))) +
+  geom_line() +
+  scale_color_manual(values = custom_colors) +
+  scale_linetype_manual(values = custom_linetypes) +
+  labs(x = "Age Group", y = "Percentage of Children", color = "Socio-economic Class", linetype = "Condition") +
+  labs(subtitle = "Percentage of Children Born in each Condition, for each age group",
+       title = "Comparing distribution of children born") +
+  theme_minimal()
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```

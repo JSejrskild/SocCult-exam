@@ -1,0 +1,99 @@
+## Here the hypothesis are modelled using Generalized Linear Models (GLM) with a Poisson distribution and a log link function.
+
+
+```{r}
+library(arm)
+library(jtools)
+library(broom.mixed)
+library(interactions)
+```
+
+# Hypothesis 01 #
+## The mean no. children born will change as a result of policy interventions
+```{r}
+data <- read.csv("data/combined_data_to_glm.csv")
+
+# Change the data type of the variables
+data$socio_economic_class <- as.factor(data$socio_economic_class)
+data$Dataset <- as.factor(data$Dataset)
+```
+
+```{r}
+#Inspect the data
+head(data)
+hist(data$Children)
+mean(data$Children) #Mean 2,26
+var(data$Children) #Variance 1,37
+```
+
+# Making the models
+```{r}
+# Model 1
+model1 <- glm(Children ~ socio_economic_class + Dataset, data = data, family = poisson(link = "log"))
+summary_model1 <- summary(model1)
+
+#Model 2
+model2 <- glm(Children ~ socio_economic_class + Dataset , data = data, family = quasipoisson(link = "log"))
+summary(model2)
+
+```
+
+## Comparing the models ##
+```{r}
+# extract coefficients from first model using 'coef()'
+coef1 = coef(model1)
+
+# extract coefficients from second model
+coef2 = coef(model2)
+
+# extract standard errors from first model using 'se.coef()'
+se.coef1 = se.coef(model1)
+
+# extract standard errors from second model
+se.coef2 = se.coef(model2)
+
+# use 'cbind()' to combine values into one dataframe
+models_compare <- cbind(coef1, se.coef1, coef2, se.coef2, exponent = exp(coef1))
+
+# show dataframe
+models_compare
+
+```
+
+# Results
+
+_Cashbenefit:_
+
+1.
+The coefficient is 0.063308. This indicates that the policy intervention "cash benefit" increases the log count of children by 0.063308
+compared to the reference policy.
+2.
+Exponentiating this, exp(0.063308)≈1.065, means the expected number of children is about 6.5% higher under the "cash benefit" intervention 
+compared to the reference policy.
+
+_Cashbonus:_
+
+1. 
+The coefficient is 0.026981. This suggests that the "cash bonus" intervention increases the log count of children by 0.026981 
+compared to the reference policy.
+2. 
+Exponentiating this, exp(0.026981)≈1.027, means the expected number of children is about 2.7% higher under the "cash bonus" intervention
+compared to the reference policy.
+
+## Visualising
+```{r}
+plot_summs(model1, scale = TRUE, exp = TRUE)
+
+````
+
+```{r}
+cat_plot(model1, pred = socio_economic_class, modx = Dataset)
+```
+
+```{r}
+effect_plot(model1, pred = "socio_economic_class", modx = "Dataset", geom = "line", plot.points = TRUE)
+```
+
+
+
+
