@@ -71,27 +71,24 @@ age_values <- c(17, 22, 27, 32, 37, 42, 47)
 # Replace age bin names with numerical values e.g. 1519 is age bin 1
 df$age_first_child_numeric <- match(df$age_first_child, age_bins)
 
-# # Calculate the mean age of the first child grouped by socio-economic class
-# mean_age_first_child <- aggregate(age_first_child_numeric ~ socio_economic_class + Dataset, data = df, FUN = mean)
-# 
-# # Convert numerical values back to age bin names
-# mean_age_first_child$age_first_child <- age_bins[mean_age_first_child$age_first_child_numeric]
-# 
-# # Remove the temporary numerical column
-# df$age_first_child_numeric <- NULL
-# 
-# # View the resulting data frame
-# print(mean_age_first_child)
+# Calculate the mean age of the first child grouped by socio-economic class
+mean_age_first_child <- aggregate(age_first_child_numeric ~ socio_economic_class + Dataset, data = df, FUN = mean)
+
+# Convert numerical values back to age bin names
+mean_age_first_child$age_first_child <- age_bins[mean_age_first_child$age_first_child_numeric]
+
+# View the resulting data frame
+print(mean_age_first_child)
 ```
 ANALYSIS
 ```{r}
-
+# How does the mean age vary in each socio-economic as a result of conditions/interventions
+df <- na.omit(df)
 split_dfs <- split(df, df$socio_economic_class)
 
 SE1 <- split_dfs[[1]]
 SE2 <- split_dfs[[2]]
-SE3<- split_dfs[[3]]
-
+SE3 <- split_dfs[[3]]
 
 # Perform ANOVA for each socio-economic class
 aov_resultSE1 <- aov(age_first_child_numeric ~ Dataset, data = SE1)
@@ -111,5 +108,44 @@ print(tukey_result1)
 tukey_result2 <- TukeyHSD(aov_resultSE3)
 print(tukey_result2)
 ```
+# Interprate mean differences across socio-economic
+```{r}
+# Convert Dataset column to factor
+df$Dataset <- as.factor(df$Dataset)
+
+# Split dataframe by Dataset
+split_dfs <- split(df, df$Dataset)
+
+# Access each split by name
+Split_baseline <- split_dfs[["baseline"]]
+Split_cashbenefit <- split_dfs[["cashbenefit"]]  # Corrected typo from "cashbeneft"
+Split_cashbonus <- split_dfs[["cashbonus"]]      # Corrected variable name
+
+
+Split_baseline$socio_economic_class <- as.factor(Split_baseline$socio_economic_class)
+Split_cashbenefit$socio_economic_class <- as.factor(Split_cashbenefit$socio_economic_class)
+Split_cashbonus$socio_economic_class <- as.factor(Split_cashbonus$socio_economic_class)
+
+# Perform ANOVA for each socio-economic class
+aov_result_baseline <- aov(age_first_child_numeric ~ socio_economic_class, data = Split_baseline)
+summary(aov_result_baseline)
+  
+aov_result_benefit <- aov(age_first_child_numeric ~ socio_economic_class, data = Split_cashbenefit)
+summary(aov_result_benefit)
+
+aov_result_bonus <- aov(age_first_child_numeric ~ socio_economic_class, data = Split_cashbonus)
+summary(aov_result_bonus)
+```
+```{r}
+tukey_result_basline <- TukeyHSD(aov_result_baseline)
+print(tukey_result_basline)
+
+tukey_result_benefit <- TukeyHSD(aov_result_benefit)
+print(tukey_result_benefit)
+
+tukey_result_bonus <- TukeyHSD(aov_result_bonus)
+print(tukey_result_bonus)
+```
+
 
 
