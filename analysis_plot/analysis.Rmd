@@ -1,9 +1,10 @@
 
 ```{r}
+
 # Load the data
-cashbenefit <- read.csv("long_cashbenefit.csv")
-cashbonus <- read.csv("long_cashbonus.csv")
-baseline <- read.csv("long_baseline.csv")
+cashbenefit <- read.csv("data/long_cashbenefit_2205.csv")
+cashbonus <- read.csv("data/long_cashbonus_2205.csv")
+baseline <- read.csv("data/long_baseline_2205.csv")
 ```
 
 ```{r}
@@ -24,16 +25,32 @@ combined_data <- rbind(cashbenefit, cashbonus, baseline)
 ```
 
 ```{r}
+# Create the new dataframe with one row for each unique combination
+combined_data <- combined_data %>%
+  group_by(Municipality, Fertility.Rate, Children) %>%
+  summarise(
+    socio_economic_class = first(socio_economic_class),
+    Age_Group = first(Age_Group),
+    Dataset = first(Dataset)
+  ) %>%
+  ungroup()  # ungroup to return to a regular dataframe
+
+
+
+```
+
+```{r}
 # Changing to factors so anova wants to play
 combined_data$socio_economic_class <- as.factor(combined_data$socio_economic_class)
 combined_data$Age_Group <- as.factor(combined_data$Age_Group)
 combined_data$Dataset <- as.factor(combined_data$Dataset)
 
+
 ```
 
 ```{r}
 # Annova test the difference between the three groups in children distribution between socioeconomic groups and age
-anova_model <- aov(Children ~ socio_economic_class + Age_Group + Dataset, data = combined_data)
+anova_model <- aov(Children ~ socio_economic_class * Dataset, data = combined_data)
 
 # Get the summary of the ANOVA test
 summary(anova_model)
@@ -60,8 +77,39 @@ cashbonus-baseline     0.10332797  0.06289571  0.14376023     0
 cashbonus-cashbenefit -0.09594376 -0.13543409 -0.05645342     0
 
 ```{r}
-plot(tukey_results)
+tukey.plot.aov<- aov(Children ~ socio_economic_class * Dataset, data = combined_data)
+plot(tukey.plot.aov)
+
+tukey.plot.test<-TukeyHSD(tukey.plot.aov)
+plot(tukey.plot.test, las = 1)
 
 
+```
+
+```{r}
+two.way.plot <- ggplot(combined_data, aes(x = "",  y = Children, group = socio_economic_class)) +
+  geom_point(aes(x = as.numeric(factor(socio_economic_class))), cex = 1.5, pch = 1.0, position = position_jitter(width = 0.1, height = 0)) +
+  labs(x = "Socio-economic Class", y = "Children")
+
+two.way.plot
+
+```
+
+```{r}
+two.way.plot <- two.way.plot +
+  stat_summary(fun.data = 'mean_se', geom = 'errorbar', width = 0.2) +
+  stat_summary(fun.data = 'mean_se', geom = 'pointrange') +
+  geom_point(data = combined_data, aes(x = Dataset, y = Children, group = socio_economic_class))
+
+two.way.plot
+```
+
+
+```{r}
+
+```
+
+
+```{r}
 
 ```
