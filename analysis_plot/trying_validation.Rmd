@@ -1,0 +1,130 @@
+---
+title: "Analysis_bayes.Rmd"
+output: html_document
+date: "2024-05-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, results='hide'}
+# Load packages
+library(brms)
+library(tidyverse)
+library(ggplot2)
+library(rethinking)
+```
+
+```{r}
+cashbenefit <- read.csv("long_cashbenefit_2205.csv")
+cashbonus <- read.csv("long_cashbonus_2205.csv")
+baseline <- read.csv("long_baseline_2205.csv")
+real_data <- read.csv("~/Desktop/Lyfe/Uni/SocCult/Population1.csv")
+```
+
+```{r}
+#Make a column with condition
+cashbenefit$condition <- 2
+cashbonus$condition <- 1
+baseline$condition <- 0
+
+
+#Merge the data frames so we can use it to model
+df_combined <- rbind(cashbenefit, cashbonus, baseline)
+df_combined$condition <- as.factor(df_combined$condition)
+df_combined$socio_economic_class <- as.factor(df_combined$socio_economic_class)
+df_combined$Age_Group <- as.factor(df_combined$Age_Group)
+```
+
+```{r}
+# Rename age columns in real data
+real_data <- real_data %>%
+  rename(
+    "1519" = `X15.19.aar`,
+    "2024" = `X20.24.aar`,
+    "2529" = `X25.29.aar`,
+    "3034" = `X30.34.aar`,
+    "3539" = `X35.39.aar`,
+    "4044" = `X40.44.aar`,
+    "4549" = `X45.49.aar`)
+
+baseline <- baseline %>%
+  rename(
+    "1519" = `X15.19`,
+    "2024" = `X20.24`,
+    "2529" = `X25.29`,
+    "3034" = `X30.34`,
+    "3539" = `X35.39`,
+    "4044" = `X40.44`,
+    "4549" = `X45.49`)
+
+# Make the values to percentages
+age_group_columns <- c('1519', '2024', '2529', '3034', '3539', '4044', '4549')
+````
+
+```{r}
+# Create a scatterplot of age vs. gender for survivors
+ggplot(baseline, aes(x = Age_Group, y = socio_economic_class, color = socio_economic_class)) +
+  geom_jitter() +
+  labs(title = "Age by Class",
+       x = "Age_group",
+       y = "socio_economic_class",
+       color = "socio_economic_class") +
+  theme_minimal()
+
+ggplot(cashbenefit, aes(x = Age_Group, y = socio_economic_class, color = socio_economic_class)) +
+  geom_jitter() +
+  labs(title = "Age by Class",
+       x = "Age_group",
+       y = "socio_economic_class",
+       color = "socio_economic_class") +
+  theme_minimal()
+
+ggplot(cashbonus, aes(x = Age_Group, y = socio_economic_class, color = socio_economic_class)) +
+  geom_jitter() +
+  labs(title = "Age by Class",
+       x = "Age_group",
+       y = "socio_economic_class",
+       color = "socio_economic_class") +
+  theme_minimal()
+
+````
+
+```{r}
+ggplot(Fertility_clean_fixed) +
+  aes(x = econ_score, fill = econ_score) +
+  geom_bar() +
+  scale_fill_hue(direction = 1) +
+  theme_minimal()
+
+```
+
+
+
+
+```{r}
+
+# Specify a Poisson model for count data
+model_formula <- bf(Children ~ condition)
+
+# Fit the model
+fit <- brm(model_formula, data = df_combined, family = poisson(), chains = 4, iter = 2000)
+
+# Summary of the model
+summary(fit)
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
