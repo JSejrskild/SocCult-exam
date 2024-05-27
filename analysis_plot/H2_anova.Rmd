@@ -1,0 +1,158 @@
+---
+title: "H2_analysis"
+output: html_document
+date: "2024-05-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Load the packages
+library(dplyr)
+library(ggplot2)
+library(car)
+library(tidyr)
+library(readr)
+
+getwd()
+```
+
+
+
+## Create data frame with mean age of 1st child. 
+```{r}
+baseline <- read.csv("../data/data_wo_bonus_2205.csv")
+bonus <- read.csv("../data/data_w_cashbonus_2205.csv")
+benefit <- read.csv("../data/data_w_cashbenefit_2205.csv")
+
+#Combine datasets 
+benefit$Dataset <- 'cashbenefit'
+bonus$Dataset <- 'cashbonus'
+baseline$Dataset <- 'baseline'
+df <- rbind(benefit, bonus, baseline)
+```
+
+
+```{r}
+# rename age bins for ease of handling
+df <- df %>%
+  rename(
+    "1519" = `X15.19`,
+    "2024" = `X20.24`,
+    "2529" = `X25.29`,
+    "3034" = `X30.34`,
+    "3539" = `X35.39`,
+    "4044" = `X40.44`,
+    "4549" = `X45.49`)
+
+# Create the function to find the first age bin with a number greater than 0
+find_first_age_bin <- function(row) {
+  age_bins <- c("1519", "2024", "2529", "3034", "3539", "4044", "4549")
+  for (age_bin in age_bins) {
+    if (row[[age_bin]] > 0) {
+      return(age_bin)  # Return the age bin if the value is greater than 0
+    }
+  }
+  return(0)  # Return 0 if no age bin has a number greater than 0
+}
+
+# Apply the function to each row and create a new column 'age_first_child'
+df$age_first_child <- apply(df[, c("1519", "2024", "2529", "3034", "3539", "4044", "4549")], 1, find_first_age_bin)
+
+# View the resulting data frame
+print(df)
+
+# Save the resulting data frame to a CSV file
+write.csv(df, ":\\Users\\mattie\\Desktop\\SocCult-exam\\data\\H2_df.csv", row.names = FALSE)
+```
+
+Get mean per socio-economic class
+```{r}
+# Define numerical values for each age bin
+age_bins <- c("1519", "2024", "2529", "3034", "3539", "4044", "4549")
+age_values <- c(17, 22, 27, 32, 37, 42, 47)
+
+# Replace age bin names with numerical values e.g. 1519 is age bin 1
+df$age_first_child_numeric <- match(df$age_first_child, age_bins)
+
+# Save the resulting data frame to a CSV file
+write.csv(df, ":\\Users\\mattie\\Desktop\\SocCult-exam\\data\\H2_df.csv", row.names = FALSE)
+
+# Calculate the mean age of the first child grouped by socio-economic class
+mean_age_first_child <- aggregate(age_first_child_numeric ~ socio_economic_class + Dataset, data = df, FUN = mean)
+
+# Convert numerical values back to age bin names
+mean_age_first_child$age_first_child <- age_bins[mean_age_first_child$age_first_child_numeric]
+
+# View the resulting data frame
+print(mean_age_first_child)
+```
+ANALYSIS
+```{r}
+# How does the mean age vary in each socio-economic as a result of conditions/interventions
+df <- na.omit(df)
+split_dfs <- split(df, df$socio_economic_class)
+
+SE1 <- split_dfs[[1]]
+SE2 <- split_dfs[[2]]
+SE3 <- split_dfs[[3]]
+
+# Perform ANOVA for each socio-economic class
+aov_resultSE1 <- aov(age_first_child_numeric ~ Dataset, data = SE1)
+summary(aov_resultSE1)
+  
+aov_resultSE2 <- aov(age_first_child_numeric ~ Dataset, data = SE2)
+summary(aov_resultSE2)
+
+aov_resultSE3 <- aov(age_first_child_numeric ~ Dataset, data = SE3)
+summary(aov_resultSE3)
+
+```
+```{r}
+tukey_result1 <- TukeyHSD(aov_resultSE2)
+print(tukey_result1)
+
+tukey_result2 <- TukeyHSD(aov_resultSE3)
+print(tukey_result2)
+```
+# Interprate mean differences across socio-economic
+```{r}
+# Convert Dataset column to factor
+df$Dataset <- as.factor(df$Dataset)
+
+# Split dataframe by Dataset
+split_dfs <- split(df, df$Dataset)
+
+# Access each split by name
+Split_baseline <- split_dfs[["baseline"]]
+Split_cashbenefit <- split_dfs[["cashbenefit"]]  # Corrected typo from "cashbeneft"
+Split_cashbonus <- split_dfs[["cashbonus"]]      # Corrected variable name
+
+
+Split_baseline$socio_economic_class <- as.factor(Split_baseline$socio_economic_class)
+Split_cashbenefit$socio_economic_class <- as.factor(Split_cashbenefit$socio_economic_class)
+Split_cashbonus$socio_economic_class <- as.factor(Split_cashbonus$socio_economic_class)
+
+# Perform ANOVA for each socio-economic class
+aov_result_baseline <- aov(age_first_child_numeric ~ socio_economic_class, data = Split_baseline)
+summary(aov_result_baseline)
+  
+aov_result_benefit <- aov(age_first_child_numeric ~ socio_economic_class, data = Split_cashbenefit)
+summary(aov_result_benefit)
+
+aov_result_bonus <- aov(age_first_child_numeric ~ socio_economic_class, data = Split_cashbonus)
+summary(aov_result_bonus)
+```
+```{r}
+tukey_result_basline <- TukeyHSD(aov_result_baseline)
+print(tukey_result_basline)
+
+tukey_result_benefit <- TukeyHSD(aov_result_benefit)
+print(tukey_result_benefit)
+
+tukey_result_bonus <- TukeyHSD(aov_result_bonus)
+print(tukey_result_bonus)
+```
+
+
+

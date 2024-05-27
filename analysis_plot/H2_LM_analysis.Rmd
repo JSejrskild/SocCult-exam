@@ -1,0 +1,128 @@
+---
+title: "H2_LM"
+output: html_document
+date: "2024-05-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Load the packages
+library(dplyr)
+library(ggplot2)
+library(car)
+library(tidyr)
+library(lme4)
+library(flexmix)
+
+
+
+getwd()
+setwd("/Users/mattie/Desktop/SocCult-exam")
+getwd()
+```
+
+
+HERE WE ARE ANALYSING H2 USING A LINEAR REGRESSION MODEL TO EXAMINE HOW SOCIO-ECONOMIC CLASS AND INTERVENTIONS INFLUENCE THE OUTCOME, AGE AT FIRST CHILD
+
+# Hypothesis 02 
+## The mean age at first child will change based on socio-economic class and intervention/dataset
+```{r}
+data <- read.csv("../data/H2_df.csv")
+
+# Change the data type of the variables
+data$socio_economic_class <- as.factor(data$socio_economic_class)
+data$Dataset <- as.factor(data$Dataset)
+```
+
+```{r}
+# Data wrangling
+
+# Redefine agebins
+data <- data %>%
+  rename(
+    "1519" = `X1519`,
+    "2024" = `X2024`,
+    "2529" = `X2529`,
+    "3034" = `X3034`,
+    "3539" = `X3539`,
+    "4044" = `X4044`,
+    "4549" = `X4549`)
+
+# Define numerical values for each age bin
+age_bins <- c("1519", "2024", "2529", "3034", "3539", "4044", "4549")
+age_values <- c(17, 22, 27, 32, 37, 42, 47)
+
+# Replace age bin names with numerical values e.g. 1519 is age bin 1
+data$age_first_child_numeric <- match(data$age_first_child, age_bins)
+```
+
+```{r}
+# Inspect the data 
+
+head(data)
+data <- na.omit(data)
+data$ID <- seq_len(nrow(data))
+
+data$age_first_child_numeric <- as.numeric(data$age_first_child_numeric)
+
+hist(data$age_first_child_numeric)
+
+mean(data$age_first_child_numeric) #Mean 2,998
+var(data$age_first_child_numeric) #Variance 0.846
+
+```
+
+
+```{r}
+# Model 1
+model1 <- lm(age_first_child_numeric ~ socio_economic_class + Dataset, data = data)
+summary(model1)
+
+# Model 2
+model2 <- lm(age_first_child_numeric ~ socio_economic_class + Dataset + socio_economic_class:Dataset , data = data)
+summary(model2)
+```
+```{r}
+# Compare models using BIC
+BIC(model1) # 643,537.5
+BIC(model2) # 643,469.9
+
+# Very similar so will use the more simple model
+```
+
+
+```{r}
+# Checking assumptions for multiple linear regression model
+
+## normal distribution
+hist(residuals(model1), col = "steelblue")
+# Although the distribution is slightly right skewed, it isn’t abnormal enough to cause any major concerns.
+
+## Homoskedascity
+#create fitted value vs residual plot
+plot(fitted(model1), residuals(model1))
+
+#add horizontal line at 0
+abline(h = 0, lty = 2)
+
+```
+
+```{r}
+summary(model1)
+```
+
+
+## Visualising
+```{r}
+plot_summs(model1, scale = TRUE, exp = TRUE)
+
+````
+
+```{r}
+cat_plot(model1, pred = socio_economic_class, modx = Dataset)
+```
+
+```{r}
+effect_plot(model1, pred = "socio_economic_class", modx = "Dataset", geom = "line", plot.points = TRUE)
+```
