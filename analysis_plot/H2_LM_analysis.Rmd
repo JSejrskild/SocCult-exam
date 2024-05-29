@@ -14,7 +14,9 @@ library(car)
 library(tidyr)
 library(lme4)
 library(flexmix)
-
+library(jtools)
+library(broom.mixed)
+library(interactions)
 
 
 getwd()
@@ -120,9 +122,13 @@ plot_summs(model1, scale = TRUE, exp = TRUE)
 ````
 
 ```{r}
-cat_plot(model1, pred = socio_economic_class, modx = Dataset)
+cat_plot(model2, pred = socio_economic_class, modx = Dataset)
 ```
 
 ```{r}
 effect_plot(model1, pred = "socio_economic_class", modx = "Dataset", geom = "line", plot.points = TRUE)
 ```
+
+
+
+
